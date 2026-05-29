@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Contact - PlantDoc AI{% endblock %}
+
+{% block content %}
+  <section class="page-hero contact-hero">
+    <div class="overlay overlay-page">
+      <h1>Contact</h1>
+      <p>Questions, feedback, and project support.</p>
+    </div>
+  </section>
+
+  <section class="contact-wrap">
+    <div class="contact-panel">
+      <h2>Contact & Support</h2>
+      <p class="subtext">Have questions about the dataset, model, or deployment? Reach out below.</p>
+
+      <div class="contact-list">
+        <div class="contact-item">
+          <div class="contact-icon">✉️</div>
+          <div>
+            <div class="contact-title">Email</div>
+            <div class="contact-value">vermatushar1117@gmail.com</div>
+          </div>
+        </div>
+
+        <div class="contact-item">
+          <div class="contact-icon">📍</div>
+          <div>
+            <div class="contact-title">Location</div>
+            <div class="contact-value">Hamirpur Himachal Pradesh, India</div>
+          </div>
+        </div>
+
+        <div class="contact-item">
+          <div class="contact-icon">🌱</div>
+          <div>
+            <div class="contact-title">Project</div>
+            <div class="contact-value">AI Plant Disease Detection</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cta-row" style="margin-top: 18px;">
+        <a class="btn-primary" href="{% url 'home' %}">Try Live Detection</a>
+        <a class="btn-secondary" href="{% url 'features' %}">View Features</a>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+

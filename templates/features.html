@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Features - PlantDoc AI{% endblock %}
+
+{% block content %}
+  <section class="page-hero features-hero">
+    <div class="overlay overlay-page">
+      <h1>Smart AI Features</h1>
+      <p>Designed for fast, reliable plant disease diagnosis.</p>
+    </div>
+  </section>
+
+  <section class="features">
+    <h2>Why PlantDoc AI?</h2>
+    <div class="feature-container">
+      <div class="card card-strong">
+        <div class="card-icon">⚡</div>
+        <img src="{% static 'images/monitering.avif' %}" alt="Monitoring">
+        <h3>Real-time Detection</h3>
+        <p>Upload a leaf image and get an instant disease prediction with top-3 suggestions.</p>
+      </div>
+
+      <div class="card card-strong">
+        <div class="card-icon">📈</div>
+        <img src="{% static 'images/analytics.avif' %}" alt="Analytics">
+        <h3>Actionable Analytics</h3>
+        <p>Confidence score + clear explanations in farmer-friendly language.</p>
+      </div>
+
+      <div class="card card-strong">
+        <div class="card-icon">🌿</div>
+        <img src="{% static 'images/cropai.avif' %}" alt="Future">
+        <h3>Smarter Farming</h3>
+        <p>Prevention tips and treatment guidance to reduce crop loss over time.</p>
+      </div>
+    </div>
+
+    <div class="cta-row">
+      <a class="btn-primary" href="{% url 'home' %}">Try Live Detection</a>
+      <a class="btn-secondary" href="{% url 'analytics' %}">See Analytics</a>
+    </div>
+  </section>
+{% endblock %}
+
+
