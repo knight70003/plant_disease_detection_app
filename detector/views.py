@@ -1,322 +1,325 @@
 import os
+import io
 import json
+import base64
+import logging
+from typing import Tuple, List, Dict, Any, Optional
+
 import numpy as np
 import tensorflow as tf
 from PIL import Image
-
 from groq import Groq
-from django.shortcuts import render
-from django.core.files.storage import FileSystemStorage
-from django.http import HttpRequest
 from dotenv import load_dotenv
 
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('Agg')  # Thread-safe headless backend for web servers
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+from django.shortcuts import render, redirect
+from django.core.files.storage import FileSystemStorage
+from django.core.files.uploadedfile import UploadedFile
+from django.http import HttpRequest, HttpResponse
 from django.conf import settings
 from django.utils import timezone
-
-
 from django.db.models import Count
-from .models import Prediction
-
 from django.contrib.auth.forms import UserCreationForm
-from django.shortcuts import redirect
-
 from django.contrib.auth.decorators import login_required
 
+from .models import Prediction
 
-
-
-# =========================
-# MODEL PATH
-# =========================
-MODEL_PATH = r"detector/model/plant_disease_model.h5"
-
-_model = None
-_model_load_error = None
-
+# Setup enterprise logging
+logger = logging.getLogger(__name__)
+load_dotenv()
 
 # =========================
-# LOAD MODEL (LAZY)
+# CONFIGURATION & CONSTANTS
 # =========================
-def get_model():
-    global _model, _model_load_error
+MODEL_PATH = getattr(settings, "PLANT_MODEL_PATH", "detector/model/plant_disease_model.h5")
+IMG_SIZE = (128, 128)
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
-    if _model is not None:
-        return _model
-
-    try:
-        _model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-    except Exception as e:
-        _model_load_error = str(e)
-        _model = None
-
-    return _model
-
-
-# =========================
-# CLASS NAMES
-# =========================
-class_names = [
-    'Corn Common Rust',
-    'Corn Healthy',
-    'Grape Black Rot',
-    'Potato Early Blight',
-    'Potato Healthy',
-    'Potato Late Blight',
-    'Tomato Early Blight',
-    'Tomato Healthy',
-    'Tomato Late Blight',
+CLASS_NAMES = [
+    'Corn Common Rust', 'Corn Healthy', 'Grape Black Rot',
+    'Potato Early Blight', 'Potato Healthy', 'Potato Late Blight',
+    'Tomato Early Blight', 'Tomato Healthy', 'Tomato Late Blight',
     'Tomato Leaf Mold'
 ]
 
+PALETTE = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#14b8a6"]
 
-# =========================
-# GROQ CLIENT
-# =========================
-load_dotenv()
-
-def get_groq_client():
-    api_key = os.environ.get("GROQ_API_KEY")
-    if not api_key:
-        return None
-    return Groq(api_key=api_key)
+# Global lazy-loaded instances
+_MODEL: Optional[tf.keras.Model] = None
+_GROQ_CLIENT: Optional[Groq] = None
 
 
 # =========================
-# IMAGE PREPROCESS
+# HELPER INITIALIZERS
 # =========================
-IMG_SIZE = (128, 128)
+def get_model() -> tf.keras.Model:
+    """Lazy-loads the Keras model with error isolation."""
+    global _MODEL
+    if _MODEL is None:
+        if not os.path.exists(MODEL_PATH):
+            logger.critical(f"Model file not found at path: {MODEL_PATH}")
+            raise FileNotFoundError(f"Model missing at {MODEL_PATH}")
+        try:
+            # compile=False optimizes load time and memory footprint
+            _MODEL = tf.keras.models.load_model(MODEL_PATH, compile=False)
+            logger.info("TensorFlow plant disease model loaded successfully.")
+        except Exception as e:
+            logger.exception("Failed to initialize TensorFlow model.")
+            raise e
+    return _MODEL
 
-def preprocess_image(file_obj):
-    img = Image.open(file_obj).convert("RGB")
-    img = img.resize(IMG_SIZE)
 
-    img = np.array(img, dtype=np.float32) / 255.0
-    img = np.expand_dims(img, axis=0)
-
-    return img
+def get_groq_client() -> Optional[Groq]:
+    """Lazy-loads the Groq API Client."""
+    global _GROQ_CLIENT
+    if _GROQ_CLIENT is None:
+        api_key = os.environ.get("GROQ_API_KEY")
+        if api_key:
+            _GROQ_CLIENT = Groq(api_key=api_key)
+        else:
+            logger.warning("GROQ_API_KEY environment variable is not set.")
+    return _GROQ_CLIENT
 
 
 # =========================
-# PREDICTION
+# ML PIPELINE UTILITIES
 # =========================
-def predict_disease(img_batch):
+def preprocess_image(file_obj: Any) -> np.ndarray:
+    """Transforms raw image into standardized tensor array."""
+    with Image.open(file_obj) as img:
+        img = img.convert("RGB").resize(IMG_SIZE)
+        img_array = np.array(img, dtype=np.float32) / 255.0
+        return np.expand_dims(img_array, axis=0)
+
+
+def predict_disease(img_batch: np.ndarray) -> Tuple[str, float, List[Dict[str, Any]]]:
+    """Runs inference on the image batch, returning top class and top-3 breakdown."""
     model = get_model()
+    predictions = model.predict(img_batch, verbose=0)
+    probabilities = np.squeeze(predictions)
 
-    if model is None:
-        raise RuntimeError("Model not loaded")
+    top_indices = np.argsort(probabilities)[::-1][:3]
+    primary_idx = top_indices[0]
+    
+    confidence = round(float(probabilities[primary_idx]) * 100, 2)
+    predicted_label = CLASS_NAMES[primary_idx]
 
-    pred = model.predict(img_batch)
-    pred = np.squeeze(pred)
-
-    index = int(np.argmax(pred))
-    confidence = round(float(pred[index]) * 100, 2)
-
-    top3 = np.argsort(pred)[::-1][:3]
-
-    prediction_top = [
+    top_3_breakdown = [
         {
-            "label": class_names[i],
-            "confidence": round(float(pred[i]) * 100, 2)
+            "label": CLASS_NAMES[i],
+            "confidence": round(float(probabilities[i]) * 100, 2)
         }
-        for i in top3
+        for i in top_indices
     ]
 
-    return class_names[index], confidence, prediction_top
+    return predicted_label, confidence, top_3_breakdown
 
 
-# =========================
-# AI RECOMMENDATION
-# =========================
-def get_ai_recommendation(label):
+def get_ai_recommendation(label: str) -> dict:
+    """Returns a structured dictionary with guaranteed normalized lowercase keys."""
     client = get_groq_client()
+    
+    # Safe default fallback structure
+    fallback = {
+        "cause": "Information is currently updating. Please try again.",
+        "treatment": "Information is currently updating. Please try again.",
+        "prevention": "Information is currently updating. Please try again.",
+        "fertilizer": "Information is currently updating. Please try again."
+    }
+    
+    if not client:
+        return fallback
 
-    if client is None:
-        return "GROQ_API_KEY missing"
+    system_instruction = (
+        "You are an expert agricultural scientist. You must respond ONLY with a valid JSON object. "
+        "Do not wrap the response in markdown code blocks or backticks. Use exactly these lowercase keys: "
+        "'cause', 'treatment', 'prevention', 'fertilizer'."
+    )
 
     prompt = f"""
-You are an agriculture expert.
+Plant Disease: {label}
 
-Disease: {label}
-
-Give:
-1. Cause
-2. Treatment
-3. Prevention
-Simple language for farmers.
+Provide a JSON object with exactly these four keys. Values must be short bullet points for farmers:
+{{
+    "cause": "- Explain what biological agent (fungus/bacteria) or weather caused this and explain simply about the fungus/bacteria in details paragraph and points in different Sytematically",
+    "treatment": "- List specific chemical or organic sprays to cure it right now in in details  paragrapgh and points in different Sytematically",
+    "prevention": "- List long-term practices to avoid it in the future in details paragraph and points in different Sytematically",
+    "fertilizer": "- Provide nutrient recovery or fertilizers tips in details paragraph and points in different Sytematically"
+}}
 """
 
     try:
-        res = client.chat.completions.create(
+        response = client.chat.completions.create(
             model="llama-3.1-8b-instant",
-            messages=[{"role": "user", "content": prompt}],
+            messages=[
+                {"role": "system", "content": system_instruction},
+                {"role": "user", "content": prompt}
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.1,
+            timeout=10.0
         )
-
-        return res.choices[0].message.content
-
+        
+        raw_content = response.choices[0].message.content.strip()
+        
+        # Defensive Fix: Remove any markdown wrapper backticks if the model accidentally added them
+        if raw_content.startswith("```"):
+            raw_content = raw_content.strip("```").strip("json").strip()
+            
+        raw_data = json.loads(raw_content)
+        
+        # Case Insensitivity Normalization: Convert all keys to lowercase to prevent Django template mismatch
+        normalized_data = {str(k).lower().strip(): v for k, v in raw_data.items()}
+        
+        # Ensure all expected keys exist with clean fallbacks if missing
+        return {
+            "cause": normalized_data.get("cause", fallback["cause"]),
+            "treatment": normalized_data.get("treatment", fallback["treatment"]),
+            "prevention": normalized_data.get("prevention", fallback["prevention"]),
+            "fertilizer": normalized_data.get("fertilizer", fallback["fertilizer"]),
+        }
+        
     except Exception as e:
-        return f"AI Error: {str(e)}"
+        logger.exception(f"Groq structural payload parsing failed for: {label}")
+        return fallback
+
+
+def generate_base64_chart(fig: plt.Figure) -> str:
+    """Converts a Matplotlib figure straight into a web-safe Base64 String (No Disk Write)."""
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=180, facecolor='#0f172a', bbox_inches='tight')
+    buf.seek(0)
+    string = base64.b64encode(buf.read()).decode('utf-8')
+    plt.close(fig)
+    return f"data:image/png;base64,{string}"
 
 
 # =========================
-# HOME VIEW (FIXED)
+# REQUEST HANDLERS (VIEWS)
 # =========================
 @login_required(login_url='login')
-def home(request: HttpRequest):
-
-    image_url = None
-    prediction = None
-    confidence = None
-    ai_response = None
-    error_message = None
-    prediction_top = None
+def home(request: HttpRequest) -> HttpResponse:
+    context = {
+        "image_url": None, "prediction": None, "confidence": None,
+        "ai_response": None, "error_message": None, "prediction_top": None
+    }
 
     if request.method == "POST" and request.FILES.get("image"):
+        image: UploadedFile = request.FILES["image"]
         try:
-            image = request.FILES["image"]
-            # FILE EXTENSION VALIDATION #
+            # Strict Validations
+            ext = os.path.splitext(image.name)[1].lower().lstrip('.')
+            if ext not in ALLOWED_EXTENSIONS:
+                raise ValueError("Unsupported format. Please upload a JPG, JPEG, or PNG image.")
             
-            allowed_extensions = ["jpg", "jpeg", "png"]
-            ext = image.name.split(".")[-1].lower()
-            if ext not in allowed_extensions:
-                raise ValueError("Only JPG, JPEG, PNG files allowed")
-            
-            # FILE SIZE VALIDATION (5MB) #
-            if image.size > 5 * 1024 * 1024:
-                raise ValueError("Image size must be below 5MB")
-            
+            if image.size > MAX_FILE_SIZE:
+                raise ValueError("The uploaded file exceeds the maximum security limit of 5MB.")
+
+            # Write file securely to disk
             fs = FileSystemStorage()
             filename = fs.save(image.name, image)
-            image_url = fs.url(filename)
+            context["image_url"] = fs.url(filename)
 
-            img_batch = preprocess_image(image)
-            prediction, confidence, prediction_top = predict_disease(img_batch)
+            # Core ML Operations
+            img_tensor = preprocess_image(image)
+            prediction, confidence, top_3 = predict_disease(img_tensor)
 
-            ai_response = get_ai_recommendation(prediction)
+            context.update({
+                "prediction": prediction,
+                "confidence": confidence,
+                "prediction_top": top_3,
+                "ai_response": get_ai_recommendation(prediction)
+            })
 
-            # ✅ SAVE TO DATABASE (FIXED)
+            # Persistent DB Write
             Prediction.objects.create(
-                image=filename,   # 🔥 IMPORTANT FIX
+                image=filename,
                 disease=prediction,
                 confidence=confidence
             )
 
-        except Exception as e:
-            error_message = "Something went wrong. Please try again."
+        except ValueError as val_err:
+            context["error_message"] = str(val_err)
+        except Exception:
+            logger.exception("An unhandled exception occurred during image processing execution.")
+            context["error_message"] = "An internal processing error occurred. Please try again."
 
-    return render(request, "home.html", {
-        "image_url": image_url,
-        "prediction": prediction,
-        "confidence": confidence,
-        "ai_response": ai_response,
-        "error_message": error_message,
-        "prediction_top": prediction_top,
-    })
+    return render(request, "home.html", context)
 
-
-# =========================
-# ANALYTICS VIEW (FIXED)
-# =========================
 
 @login_required(login_url='login')
-def analytics(request):
+def analytics(request: HttpRequest) -> HttpResponse:
+    query_set = Prediction.objects.values('disease').annotate(total=Count('disease'))
+    
+    labels = [item['disease'] for item in query_set]
+    values = [item['total'] for item in query_set]
 
-    data = Prediction.objects.values('disease').annotate(total=Count('disease'))
-    labels = [x['disease'] for x in data]
-    values = [x['total'] for x in data]
-
-    total_predictions = int(sum(values))
+    total_predictions = sum(values)
     disease_types = len(labels)
 
-    # Server-side (seaborn/matplotlib) chart generation
-    # Saves to static/ so Django can serve them.
-    chart_dir = os.path.join('static', 'generated')
-    os.makedirs(chart_dir, exist_ok=True)
-
-    # Make deterministic filenames; charts update when new data is generated.
-    ts = int(timezone.now().timestamp())
-    bar_path = os.path.join(chart_dir, f'analytics_bar_{ts}.png')
-    doughnut_path = os.path.join(chart_dir, f'analytics_doughnut_{ts}.png')
-
-    bar_url = f'/static/generated/{os.path.basename(bar_path)}'
-    doughnut_url = f'/static/generated/{os.path.basename(doughnut_path)}'
-
-    palette = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#14b8a6"]
-
-    # If no data, still render placeholder charts (prevents template logic complexity)
-    if not labels or not values:
-        labels = ['No data']
-        values = [1]
+    # UI Context fallback parameters
+    chart_labels = labels if labels else ['No Records Available']
+    chart_values = values if values else [1]
 
     sns.set_theme(style='darkgrid')
 
-    # --- Bar chart ---
-    plt.figure(figsize=(10, 5))
-    colors = [palette[i % len(palette)] for i in range(len(values))]
-    sns.barplot(x=labels, y=values, palette=colors)
-    plt.title('Disease Detection Frequency', color='white')
-    plt.xlabel('Disease', color='white')
-    plt.ylabel('Count', color='white')
-    plt.xticks(rotation=30, ha='right', color='white')
-    plt.yticks(color='white')
-    plt.tight_layout()
-    plt.savefig(bar_path, dpi=200, facecolor='#0f172a')
-    plt.close()
+    # Chart 1: Matplotlib Bar Chart Execution
+    fig1, ax1 = plt.subplots(figsize=(10, 5))
+    colors = [PALETTE[i % len(PALETTE)] for i in range(len(chart_values))]
+    sns.barplot(x=chart_labels, y=chart_values, palette=colors, ax=ax1)
+    ax1.set_title('Disease Detection Frequency', color='white', pad=15)
+    ax1.set_xlabel('Disease', color='white')
+    ax1.set_ylabel('Count', color='white')
+    ax1.tick_params(colors='white')
+    plt.xticks(rotation=25, ha='right')
+    bar_chart_data = generate_base64_chart(fig1)
 
-    # --- Doughnut chart (pie with circle) ---
-    plt.figure(figsize=(7, 5))
-    colors = [palette[i % len(palette)] for i in range(len(values))]
-    wedges, _texts = plt.pie(values, colors=colors, startangle=90, wedgeprops={'edgecolor': '#0f172a'})
-    # cutout
+    # Chart 2: Matplotlib Doughnut Pie Execution
+    fig2, ax2 = plt.subplots(figsize=(7, 5))
+    wedges, _ = ax2.pie(chart_values, colors=colors, startangle=90, wedgeprops={'edgecolor': '#0f172a'})
     centre_circle = plt.Circle((0, 0), 0.6, fc='#0f172a')
-    fig = plt.gcf()
-    fig.gca().add_artist(centre_circle)
-    plt.title('Disease Distribution', color='white')
-    plt.tight_layout()
-    plt.savefig(doughnut_path, dpi=200, facecolor='#0f172a')
-    plt.close()
+    ax2.add_artist(centre_circle)
+    ax2.set_title('Disease Distribution', color='white', pad=15)
+    doughnut_chart_data = generate_base64_chart(fig2)
 
     return render(request, "analytics.html", {
-        "labels": json.dumps([*labels]),
-        "values": json.dumps([*values]),
+        "labels": json.dumps(labels),
+        "values": json.dumps(values),
         "total_predictions": total_predictions,
         "disease_types": disease_types,
-        "bar_chart_url": bar_url,
-        "doughnut_chart_url": doughnut_url,
+        "bar_chart_url": bar_chart_data,       # Simply swap `<img src="{{ bar_chart_url }}">` in template!
+        "doughnut_chart_url": doughnut_chart_data,
     })
 
 
 # =========================
-# STATIC PAGES
+# AUTHENTICATION & STATIC
 # =========================
-def features(request):
+def features(request: HttpRequest) -> HttpResponse:
     return render(request, "features.html")
 
 
-def contact(request):
+def contact(request: HttpRequest) -> HttpResponse:
     return render(request, "contact.html")
 
-def signup(request):
 
+def signup(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
-
         form = UserCreationForm(request.POST)
-
         if form.is_valid():
             form.save()
-
             return redirect("login")
-
     else:
         form = UserCreationForm()
 
-    return render(request, "registration/signup.html", {
-        "form": form
-    })
-    
-    
-    def redirect_to_login(request):
-        return redirect('login')
+    return render(request, "registration/signup.html", {"form": form})
+
+
+def redirect_to_login(request: HttpRequest) -> HttpResponse:
+    """Fixed Indentation Defect"""
+    return redirect('login')

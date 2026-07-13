@@ -4,50 +4,127 @@
 {% block title %}Contact - PlantDoc AI{% endblock %}
 
 {% block content %}
-  <section class="page-hero contact-hero">
-    <div class="overlay overlay-page">
-      <h1>Contact</h1>
-      <p>Questions, feedback, and project support.</p>
+  <section class="relative overflow-hidden pt-32 pb-16 bg-[#0f172a]" aria-label="Contact Hero">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(34,197,94,0.1),transparent_50%)]" aria-hidden="true"></div>
+    <div class="absolute -bottom-20 -right-20 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl" aria-hidden="true"></div>
+    
+    <div class="container mx-auto px-4 max-w-6xl relative z-10 text-center">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-800 bg-slate-900/50 backdrop-blur-md mb-6">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-xs font-semibold tracking-wider text-slate-300 uppercase">Support & Network Hub</span>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white max-w-2xl mx-auto leading-tight">
+        Get In Touch With <span class="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">PlantDoc AI</span>
+      </h1>
+      <p class="mt-4 text-base md:text-lg text-slate-400 max-w-xl mx-auto leading-relaxed">
+        Have questions about model parameters, dataset architecture, or production deployment workflows? Let's connect.
+      </p>
     </div>
   </section>
 
-  <section class="contact-wrap">
-    <div class="contact-panel">
-      <h2>Contact & Support</h2>
-      <p class="subtext">Have questions about the dataset, model, or deployment? Reach out below.</p>
+  <section class="py-12 pb-24 bg-[#0b0f19] border-t border-slate-800/60 relative">
+    <div class="container mx-auto px-4 max-w-6xl">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        
+        <div class="lg:col-span-5 space-y-6">
+          <div class="rounded-2xl border border-slate-800/80 bg-slate-900/20 p-8 backdrop-blur-md shadow-xl relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl" aria-hidden="true"></div>
+            
+            <h2 class="text-xl font-bold text-white tracking-wide mb-2">Project Node Information</h2>
+            <p class="text-slate-400 text-sm leading-relaxed mb-8">Maintainer profile for engine updates and platform integration inquiries.</p>
+            
+            <div class="space-y-6">
+              <div class="flex items-start gap-4 group">
+                <div class="w-10 h-10 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-emerald-400 transition-colors group-hover:border-emerald-500/30">
+                  ✉️
+                </div>
+                <div>
+                  <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Primary Contact</h3>
+                  <a href="mailto:vermatushar1117@gmail.com" class="text-slate-200 font-medium text-sm hover:text-emerald-400 transition-colors duration-150 block mt-0.5">
+                    vermatushar1117@gmail.com
+                  </a>
+                </div>
+              </div>
 
-      <div class="contact-list">
-        <div class="contact-item">
-          <div class="contact-icon">✉️</div>
-          <div>
-            <div class="contact-title">Email</div>
-            <div class="contact-value">vermatushar1117@gmail.com</div>
+              <div class="flex items-start gap-4 group">
+                <div class="w-10 h-10 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-emerald-400 transition-colors group-hover:border-emerald-500/30">
+                  📍
+                </div>
+                <div>
+                  <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Development Base</h3>
+                  <p class="text-slate-200 font-medium text-sm mt-0.5">
+                    Hamirpur, Himachal Pradesh, India
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-4 group">
+                <div class="w-10 h-10 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-emerald-400 transition-colors group-hover:border-emerald-500/30">
+                  🌱
+                </div>
+                <div>
+                  <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Active Framework</h3>
+                  <p class="text-slate-200 font-medium text-sm mt-0.5">
+                    TensorFlow Core • Django MVC Pipeline
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-10 pt-6 border-t border-slate-800/80 flex gap-4">
+              <a href="{% url 'home' %}" class="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors">
+                ← Go to Inference Engine
+              </a>
+              <span class="text-slate-700">|</span>
+              <a href="{% url 'features' %}" class="text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors">
+                Explore Tech Stack
+              </a>
+            </div>
           </div>
         </div>
 
-        <div class="contact-item">
-          <div class="contact-icon">📍</div>
-          <div>
-            <div class="contact-title">Location</div>
-            <div class="contact-value">Hamirpur Himachal Pradesh, India</div>
+        <div class="lg:col-span-7">
+          <div class="rounded-2xl border border-slate-800 bg-slate-900/40 p-8 backdrop-blur-sm shadow-2xl">
+            <h2 class="text-xl font-bold text-white mb-2">Transmission Portal</h2>
+            <p class="text-slate-400 text-sm mb-6">Drop a secure transmission below; message routing completes instantly.</p>
+            
+            <form action="#" method="POST" class="space-y-5" onsubmit="event.preventDefault(); alert('Message transmission layer simulation ready!');">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label for="sender_name" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Your Name</label>
+                  <input type="text" id="sender_name" required placeholder="Tushar Verma" 
+                    class="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder-slate-600 focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-all">
+                </div>
+                <div>
+                  <label for="sender_email" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
+                  <input type="email" id="sender_email" required placeholder="developer@domain.com" 
+                    class="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder-slate-600 focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-all">
+                </div>
+              </div>
+
+              <div>
+                <label for="msg_subject" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Subject Header</label>
+                <input type="text" id="msg_subject" required placeholder="Model Deployment Strategy / API Integration Queries" 
+                  class="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder-slate-600 focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-all">
+              </div>
+
+              <div>
+                <label for="msg_body" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Message Body Payload</label>
+                <textarea id="msg_body" required rows="4" placeholder="Write your technical questions or platform integration requirements here..." 
+                  class="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white placeholder-slate-600 focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-all"></textarea>
+              </div>
+
+              <div class="pt-2">
+                <button type="submit" class="w-full px-6 py-3.5 rounded-xl bg-emerald-500 font-semibold text-slate-950 shadow-lg shadow-emerald-500/10 hover:bg-emerald-400 hover:shadow-emerald-500/20 active:scale-[0.99] transition-all duration-150 text-sm">
+                  Dispatch Message
+                </button>
+              </div>
+            </form>
           </div>
         </div>
 
-        <div class="contact-item">
-          <div class="contact-icon">🌱</div>
-          <div>
-            <div class="contact-title">Project</div>
-            <div class="contact-value">AI Plant Disease Detection</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="cta-row" style="margin-top: 18px;">
-        <a class="btn-primary" href="{% url 'home' %}">Try Live Detection</a>
-        <a class="btn-secondary" href="{% url 'features' %}">View Features</a>
       </div>
     </div>
   </section>
 {% endblock %}
-
 
