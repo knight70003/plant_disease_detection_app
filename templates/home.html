@@ -78,11 +78,11 @@
       {% endif %}
 
       {% if image_url %}
-        <div class="preview" style="margin-top:30px;">
-          <h2 class="preview-title">Uploaded Image</h2>
-          <img class="preview-img" src="{{ image_url }}" alt="Uploaded Image">
-        </div>
-      {% endif %}
+  <div class="preview" style="margin-top:30px;">
+    <h2 class="preview-title">Uploaded Image</h2>
+    <img class="preview-img" src="{{ image_url }}" alt="Uploaded Image" style="display: block;">
+  </div>
+{% endif %}
 
       {% if prediction %}
         <div class="result-box glass-panel mt-10">

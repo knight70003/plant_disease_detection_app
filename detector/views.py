@@ -146,16 +146,16 @@ Plant Disease: {label}
 
 Provide a JSON object with exactly these four keys. Values must be short bullet points for farmers:
 {{
-    "cause": "- Explain what biological agent (fungus/bacteria) or weather caused this and explain simply about the fungus/bacteria in details paragraph and points in different Sytematically",
-    "treatment": "- List specific chemical or organic sprays to cure it right now in in details  paragrapgh and points in different Sytematically",
-    "prevention": "- List long-term practices to avoid it in the future in details paragraph and points in different Sytematically",
-    "fertilizer": "- Provide nutrient recovery or fertilizers tips in details paragraph and points in different Sytematically"
+    "cause": "- Explain what biological agent (fungus/bacteria) or weather caused this and explain simply about the fungus/bacteria in details paragraph and 10 points in different Sytematically",
+    "treatment": "- List specific chemical or organic sprays to cure it right now in in details  paragrapgh and 10 points in different Sytematically",
+    "prevention": "- List long-term practices to avoid it in the future in details paragraph and  10 points in different Sytematically",
+    "fertilizer": "- Provide nutrient recovery or fertilizers tips in details paragraph and  10 points in different Sytematically"
 }}
 """
 
     try:
         response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model="openai/gpt-oss-120b",
             messages=[
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": prompt}
@@ -220,12 +220,7 @@ def home(request: HttpRequest) -> HttpResponse:
             if image.size > MAX_FILE_SIZE:
                 raise ValueError("The uploaded file exceeds the maximum security limit of 5MB.")
 
-            # Write file securely to disk
-            fs = FileSystemStorage()
-            filename = fs.save(image.name, image)
-            context["image_url"] = fs.url(filename)
-
-            # Core ML Operations
+            # Core ML Operations (Read image bytes before Django saves/modifies it)
             img_tensor = preprocess_image(image)
             prediction, confidence, top_3 = predict_disease(img_tensor)
 
@@ -236,12 +231,15 @@ def home(request: HttpRequest) -> HttpResponse:
                 "ai_response": get_ai_recommendation(prediction)
             })
 
-            # Persistent DB Write
-            Prediction.objects.create(
-                image=filename,
+            # Persistent DB Write (Passing the InMemoryUploadedFile directly to Django's ImageField)
+            prediction_obj = Prediction.objects.create(
+                image=image,
                 disease=prediction,
                 confidence=confidence
             )
+            
+            # Use Django's internal ImageField url property so it matches upload_to="uploads/" exactly
+            context["image_url"] = prediction_obj.image.url
 
         except ValueError as val_err:
             context["error_message"] = str(val_err)

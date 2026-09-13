@@ -583,7 +583,7 @@ input[type="file"] {
     margin-top: 30px;
 }
 
-.preview img {
+.preview-img {
     width: 420px;
     max-width: 90%;
     border-radius: 25px;
