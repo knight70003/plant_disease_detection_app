@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}History · PlantDoc AI{% endblock %}
+{% block page_title %}History{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1>Detection history</h1>
+      <p class="lead">{{ total_count }} scan{{ total_count|pluralize }}{% if q or status != 'all' %} match your filters{% endif %}.</p>
+    </div>
+    <a class="btn btn-primary" href="{% url 'home' %}"><svg class="ic"><use href="#i-scan"/></svg>New scan</a>
+  </div>
+
+  <form class="toolbar" method="get" role="search">
+    <div class="search">
+      <svg class="ic"><use href="#i-search"/></svg>
+      <input class="field" type="search" name="q" value="{{ q }}" placeholder="Search by disease, e.g. tomato blight" aria-label="Search detections">
+    </div>
+    <select class="field" name="status" aria-label="Filter by status" data-autosubmit>
+      <option value="all" {% if status == 'all' %}selected{% endif %}>All results</option>
+      <option value="healthy" {% if status == 'healthy' %}selected{% endif %}>Healthy only</option>
+      <option value="infected" {% if status == 'infected' %}selected{% endif %}>Diseased only</option>
+    </select>
+    <button class="btn btn-ghost" type="submit">Search</button>
+  </form>
+
+  <div class="card table-wrap">
+    {% if rows %}
+    <table class="tbl">
+      <thead><tr><th scope="col">Leaf</th><th scope="col">Status</th><th scope="col">Confidence</th>{% if has_date %}<th scope="col">Scanned</th>{% endif %}</tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td><div class="cell-leaf">{% if r.image_url %}<img class="thumb" src="{{ r.image_url }}" alt="" loading="lazy">{% else %}<span class="thumb"></span>{% endif %}{{ r.disease }}</div></td>
+          <td>{% if r.is_healthy %}<span class="status ok">Healthy</span>{% else %}<span class="status bad">Disease</span>{% endif %}</td>
+          <td><div class="conf"><i><b style="width: {{ r.confidence|stringformat:'f' }}%"></b></i>{{ r.confidence }}%</div></td>
+          {% if has_date %}<td>{% if r.date %}{{ r.date|date:"d M Y, H:i" }}{% endif %}</td>{% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="pager">
+      <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      <div>
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}&status={{ status }}">Previous</a>{% else %}<span class="off">Previous</span>{% endif %}
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}&status={{ status }}">Next</a>{% else %}<span class="off">Next</span>{% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div class="empty">
+      <svg class="ic"><use href="#i-history"/></svg>
+      <h2>{% if q or status != 'all' %}No scans match{% else %}No scans yet{% endif %}</h2>
+      <p>{% if q or status != 'all' %}Try a different search or clear the filter.{% else %}Scan a leaf and it will be listed here.{% endif %}</p>
+      <a class="btn btn-primary" href="{% if q or status != 'all' %}?{% else %}{% url 'home' %}{% endif %}">{% if q or status != 'all' %}Clear filters{% else %}Scan a leaf{% endif %}</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
