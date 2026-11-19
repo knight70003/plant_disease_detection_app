@@ -1,113 +1,87 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Features - PlantDoc AI{% endblock %}
+{% block title %}PlantDoc AI · Plant disease detection{% endblock %}
+{% block page_title %}Features{% endblock %}
 
 {% block content %}
-  <section class="relative overflow-hidden pt-32 pb-20 bg-[#0f172a]" aria-label="Features Hero">
-    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,197,94,0.12),transparent_50%)]" aria-hidden="true"></div>
-    <div class="absolute -top-40 -left-40 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl" aria-hidden="true"></div>
-    
-    <div class="container mx-auto px-4 max-w-6xl relative z-10 text-center">
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 backdrop-blur-md mb-6">
-        <span class="text-xs font-semibold tracking-wider text-emerald-400 uppercase">Platform Capabilities</span>
-      </div>
-      <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-white max-w-3xl mx-auto leading-tight">
-        Next-Generation <span class="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Agri-Tech</span> Architecture
-      </h1>
-      <p class="mt-6 text-base md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-        Engineered with cutting-edge deep learning models and LLM multi-agent pipelines to deliver instantaneous field diagnostics.
-      </p>
+<section class="hero" aria-label="Introduction">
+  <div>
+    <h1>Know what's wrong with the leaf before it spreads.</h1>
+    <p class="lead">Upload a photo of a crop leaf. PlantDoc AI names the disease, shows how sure it is, and lays out what to do next.</p>
+    <div class="hero-cta">
+      {% if user.is_authenticated %}
+        <a class="btn btn-primary" href="{% url 'home' %}"><svg class="ic"><use href="#i-scan"/></svg>Scan a leaf</a>
+        <a class="btn btn-ghost" href="{% url 'analytics' %}">Open dashboard</a>
+      {% else %}
+        <a class="btn btn-primary" href="{% url 'signup' %}">Create a free account</a>
+        <a class="btn btn-ghost" href="{% url 'login' %}">Log in</a>
+      {% endif %}
+    </div>
+  </div>
+  <figure class="hero-art" style="margin:0">
+    <img src="{% static 'images/future.jpg' %}" alt="A young plant beside a tablet showing field data">
+    <figcaption>Corn, grape, potato and tomato leaves</figcaption>
+  </figure>
+</section>
+
+<div class="band">
+  <section class="section" style="padding-block:40px" aria-labelledby="condTitle">
+    <h2 id="condTitle" style="font-size:20px;margin-bottom:16px">Ten conditions it can tell apart</h2>
+    <div class="conditions">
+      <span class="pill"><b>Corn</b> common rust</span><span class="pill"><b>Corn</b> healthy</span>
+      <span class="pill"><b>Grape</b> black rot</span>
+      <span class="pill"><b>Potato</b> early blight</span><span class="pill"><b>Potato</b> late blight</span><span class="pill"><b>Potato</b> healthy</span>
+      <span class="pill"><b>Tomato</b> early blight</span><span class="pill"><b>Tomato</b> late blight</span><span class="pill"><b>Tomato</b> leaf mold</span><span class="pill"><b>Tomato</b> healthy</span>
     </div>
   </section>
+</div>
 
-  <section class="py-20 bg-[#0b0f19] border-t border-slate-800/60 relative">
-    <div class="container mx-auto px-4 max-w-6xl">
-      
-      <div class="text-center max-w-3xl mx-auto mb-16">
-        <h2 class="text-3xl md:text-4xl font-bold text-white tracking-tight">Why Choose PlantDoc AI?</h2>
-        <p class="text-slate-400 mt-3">An end-to-end plant pathology workflow built around high-throughput accuracy.</p>
-      </div>
+<section class="section" aria-labelledby="howTitle">
+  <div class="section-head"><h2 id="howTitle">From photo to plan in three steps</h2></div>
+  <div class="steps">
+    <div class="step"><h3>Upload a leaf</h3><p>Drag in a JPG or PNG of one leaf, up to 5 MB.</p></div>
+    <div class="step"><h3>Read the diagnosis</h3><p>See the most likely disease and the two closest matches, each with a confidence score.</p></div>
+    <div class="step"><h3>Follow the plan</h3><p>Get the cause, treatment, prevention and fertilizer guidance in separate tabs.</p></div>
+  </div>
+</section>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="group relative rounded-2xl border border-slate-800 bg-slate-900/40 p-8 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/30 hover:bg-slate-900/80 shadow-xl">
-          <div class="absolute inset-0 rounded-2xl bg-gradient-to-b from-emerald-500/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true"></div>
-          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xl text-emerald-400 mb-6 group-hover:scale-110 transition-transform duration-300">⚡</div>
-          <h3 class="text-xl font-bold text-white mb-3">Real-time Computer Vision</h3>
-          <p class="text-slate-400 text-sm leading-relaxed mb-6">
-            Leverages custom-trained deep Convolutional Neural Networks to score leaf surface anomalies and extract top-3 probable matches in under 300ms.
-          </p>
-          <div class="overflow-hidden rounded-xl border border-slate-800 shadow-inner h-44 bg-slate-950">
-            <img class="w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-90 transition-all duration-500" src="{% static 'images/monitering.avif' %}" alt="Computer Vision Diagnostics">
-          </div>
-        </div>
-
-        <div class="group relative rounded-2xl border border-slate-800 bg-slate-900/40 p-8 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/30 hover:bg-slate-900/80 shadow-xl">
-          <div class="absolute inset-0 rounded-2xl bg-gradient-to-b from-emerald-500/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true"></div>
-          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xl text-emerald-400 mb-6 group-hover:scale-110 transition-transform duration-300">📈</div>
-          <h3 class="text-xl font-bold text-white mb-3">Granular Field Analytics</h3>
-          <p class="text-slate-400 text-sm leading-relaxed mb-6">
-            Tracks recurring pathogens inside individual zones using dynamic database aggregation to populate structural charts without system overhead.
-          </p>
-          <div class="overflow-hidden rounded-xl border border-slate-800 shadow-inner h-44 bg-slate-950">
-            <img class="w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-90 transition-all duration-500" src="{% static 'images/analytics.avif' %}" alt="Data Visualization Analytics">
-          </div>
-        </div>
-
-        <div class="group relative rounded-2xl border border-slate-800 bg-slate-900/40 p-8 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/30 hover:bg-slate-900/80 shadow-xl">
-          <div class="absolute inset-0 rounded-2xl bg-gradient-to-b from-emerald-500/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" aria-hidden="true"></div>
-          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xl text-emerald-400 mb-6 group-hover:scale-110 transition-transform duration-300">🌿</div>
-          <h3 class="text-xl font-bold text-white mb-3">AI Pathologist Insights</h3>
-          <p class="text-slate-400 text-sm leading-relaxed mb-6">
-            Orchestrates structural API prompts mapped into individual macro panels spanning active treatment, chemical selection, and nutritional recovery plans.
-          </p>
-          <div class="overflow-hidden rounded-xl border border-slate-800 shadow-inner h-44 bg-slate-950">
-            <img class="w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-90 transition-all duration-500" src="{% static 'images/cropai.avif' %}" alt="Smarter Agronomy Guidance">
-          </div>
-        </div>
-      </div>
-
-      <div class="mt-16 flex flex-col sm:flex-row items-center justify-center gap-4 border-t border-slate-800/80 pt-12">
-        <a class="w-full sm:w-auto text-center px-6 py-3 rounded-xl bg-emerald-500 font-semibold text-slate-950 shadow-lg shadow-emerald-500/20 hover:bg-emerald-400 transition-all duration-200" href="{% url 'home' %}">
-          Launch Live Detector
-        </a>
-        <a class="w-full sm:w-auto text-center px-6 py-3 rounded-xl border border-slate-700 bg-slate-900/40 font-semibold text-white hover:bg-slate-800 transition-all duration-200" href="{% url 'analytics' %}">
-          Review Global Analytics
-        </a>
-      </div>
-
+<div class="band">
+  <section class="section" aria-labelledby="featTitle">
+    <div class="section-head"><h2 id="featTitle">Built around what farmers do next</h2></div>
+    <div class="row">
+      <div class="row-img"><img src="{% static 'images/monitering.avif' %}" alt="Crop monitoring with a field sensor" loading="lazy"></div>
+      <div><h3>Photo in, diagnosis out</h3><p>The model resizes your photo to 128 × 128 pixels and scores it against ten known conditions. You see the top three matches, not just one guess.</p></div>
+    </div>
+    <div class="row">
+      <div class="row-img"><img src="{% static 'images/analytics.avif' %}" alt="Analytics dashboard on a screen" loading="lazy"></div>
+      <div><h3>See patterns across your scans</h3><p>Every scan is saved. The dashboard counts how often each disease appears, and the history page lets you search and filter past results.</p></div>
+    </div>
+    <div class="row">
+      <div class="row-img"><img src="{% static 'images/cropai.avif' %}" alt="AI assisting crop management" loading="lazy"></div>
+      <div><h3>A plan you can act on</h3><p>For each result, an AI model writes likely causes, treatments, prevention steps and fertilizer advice in plain language.</p></div>
     </div>
   </section>
+</div>
 
-  <section class="py-20 bg-[#0f172a] border-t border-slate-800/60">
-    <div class="container mx-auto px-4 max-w-4xl">
-      <div class="text-center mb-12">
-        <h2 class="text-2xl md:text-3xl font-bold text-white tracking-tight">Frequently Asked Questions</h2>
-        <p class="text-slate-400 mt-2">Technical operations breakdown of PlantDoc AI engine.</p>
-      </div>
+<section class="section" aria-labelledby="faqTitle">
+  <div class="section-head"><h2 id="faqTitle">Questions</h2></div>
+  <div class="faq">
+    <details open><summary>How do I read the confidence score?</summary><p>It shows how strongly the model favors its top answer. If the score is low or a second match is close, retake the photo in better light or ask a local agronomist.</p></details>
+    <details><summary>Where do the treatment suggestions come from?</summary><p>They are generated by a language model from the detected disease name. Treat them as a starting point and confirm them with local agronomy guidance.</p></details>
+    <details><summary>Are my photos saved?</summary><p>Yes. Each scanned image is stored on the server with its result so it can appear in your dashboard and history.</p></details>
+    <details><summary>Which crops are supported?</summary><p>Corn, grape, potato and tomato, covering the ten conditions listed above.</p></details>
+  </div>
+</section>
 
-      <div class="space-y-4">
-        <details class="group rounded-xl border border-slate-800 bg-slate-900/20 p-6 [&_summary::-webkit-details-marker]:hidden" open>
-          <summary class="flex items-center justify-between cursor-pointer text-white font-semibold list-none">
-            <span>How precise is the underlying detection model?</span>
-            <span class="ml-1.5 flex-shrink-0 rounded-full bg-slate-800 p-1.5 text-slate-400 group-open:rotate-180 transition-transform duration-200">👇</span>
-          </summary>
-          <p class="mt-4 text-slate-400 text-sm leading-relaxed border-t border-slate-800/60 pt-4">
-            The prediction core runs an image tensor validation sequence downscaling inputs to 128x128 pixel dimensions before passing weights across multiple feed-forward neural layers to minimize inference errors.
-          </p>
-        </details>
-
-        <details class="group rounded-xl border border-slate-800 bg-slate-900/20 p-6 [&_summary::-webkit-details-marker]:hidden">
-          <summary class="flex items-center justify-between cursor-pointer text-white font-semibold list-none">
-            <span>How does the system isolate recommendations without mixing data?</span>
-            <span class="ml-1.5 flex-shrink-0 rounded-full bg-slate-800 p-1.5 text-slate-400 group-open:rotate-180 transition-transform duration-200">👇</span>
-          </summary>
-          <p class="mt-4 text-slate-400 text-sm leading-relaxed border-t border-slate-800/60 pt-4">
-            Our platform forces strict JSON formatting directly inside the LLM prompt matrix at low compilation temperatures. This guarantees your visual cards never repeat context across categories.
-          </p>
-        </details>
-      </div>
-    </div>
-  </section>
+<section class="cta-band" aria-label="Get started">
+  <h2>Check your next leaf in seconds</h2>
+  <p>It takes one photo.</p>
+  {% if user.is_authenticated %}
+    <a class="btn btn-light" href="{% url 'home' %}">Scan a leaf</a>
+  {% else %}
+    <a class="btn btn-light" href="{% url 'signup' %}">Create a free account</a>
+  {% endif %}
+</section>
 {% endblock %}
 

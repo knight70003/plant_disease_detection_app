@@ -22,7 +22,9 @@ from django.core.files.uploadedfile import UploadedFile
 from django.http import HttpRequest, HttpResponse
 from django.conf import settings
 from django.utils import timezone
-from django.db.models import Count
+from django.db import models as dj_models
+from django.db.models import Avg, Count
+from django.core.paginator import Paginator
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 
@@ -146,10 +148,10 @@ Plant Disease: {label}
 
 Provide a JSON object with exactly these four keys. Values must be short bullet points for farmers:
 {{
-    "cause": "- Explain what biological agent (fungus/bacteria) or weather caused this and explain simply about the fungus/bacteria in details paragraph and 10 points in different Sytematically",
-    "treatment": "- List specific chemical or organic sprays to cure it right now in in details  paragrapgh and 10 points in different Sytematically",
-    "prevention": "- List long-term practices to avoid it in the future in details paragraph and  10 points in different Sytematically",
-    "fertilizer": "- Provide nutrient recovery or fertilizers tips in details paragraph and  10 points in different Sytematically"
+    "cause": "- Explain what biological agent (fungus/bacteria) or weather caused this and explain simply about the fungus/bacteria in detailed and 10 points briefly in differently Sytematically",
+    "treatment": "- List specific chemical or organic sprays to cure it right now in detailed and 10 points briefly in differently Sytematically",
+    "prevention": "- List long-term practices to avoid it in the future in detailed and 10 points briefly in differently Sytematically",
+    "fertilizer": "- Provide nutrient recovery or fertilizers tips in detailed and 10 points briefly in differently Sytematically"
 }}
 """
 
@@ -202,6 +204,35 @@ def generate_base64_chart(fig: plt.Figure) -> str:
 # =========================
 # REQUEST HANDLERS (VIEWS)
 # =========================
+# =========================
+# DASHBOARD / HISTORY HELPERS (UI support only)
+# =========================
+def _date_field_name() -> Optional[str]:
+    """Finds the Prediction model's date/datetime field, if it has one."""
+    for field in Prediction._meta.concrete_fields:
+        if isinstance(field, (dj_models.DateTimeField, dj_models.DateField)):
+            return field.name
+    return None
+
+
+def _ordered(qs):
+    """Newest first: by date field when present, always tie-broken by primary key."""
+    date_field = _date_field_name()
+    order = ([f"-{date_field}"] if date_field else []) + ["-pk"]
+    return qs.order_by(*order)
+
+
+def _prediction_row(p: "Prediction") -> Dict[str, Any]:
+    date_field = _date_field_name()
+    return {
+        "image_url": p.image.url if p.image else "",
+        "disease": p.disease,
+        "confidence": p.confidence,
+        "is_healthy": "healthy" in (p.disease or "").lower(),
+        "date": getattr(p, date_field) if date_field else None,
+    }
+
+
 @login_required(login_url='login')
 def home(request: HttpRequest) -> HttpResponse:
     context = {
@@ -285,7 +316,15 @@ def analytics(request: HttpRequest) -> HttpResponse:
     ax2.set_title('Disease Distribution', color='white', pad=15)
     doughnut_chart_data = generate_base64_chart(fig2)
 
+    healthy_count = Prediction.objects.filter(disease__icontains="healthy").count()
+    avg_confidence = Prediction.objects.aggregate(avg=Avg("confidence"))["avg"]
+    recent_predictions = [_prediction_row(p) for p in _ordered(Prediction.objects.all())[:6]]
+
     return render(request, "analytics.html", {
+        "healthy_count": healthy_count,
+        "infected_count": total_predictions - healthy_count,
+        "avg_confidence": round(float(avg_confidence), 1) if avg_confidence is not None else None,
+        "recent_predictions": recent_predictions,
         "labels": json.dumps(labels),
         "values": json.dumps(values),
         "total_predictions": total_predictions,
@@ -321,3 +360,32 @@ def signup(request: HttpRequest) -> HttpResponse:
 def redirect_to_login(request: HttpRequest) -> HttpResponse:
     """Fixed Indentation Defect"""
     return redirect('login')
+
+
+@login_required(login_url='login')
+def history(request: HttpRequest) -> HttpResponse:
+    """Searchable, filterable, paginated list of past detections."""
+    q = request.GET.get("q", "").strip()
+    status = request.GET.get("status", "all")
+
+    qs = Prediction.objects.all()
+    if q:
+        qs = qs.filter(disease__icontains=q)
+    if status == "healthy":
+        qs = qs.filter(disease__icontains="healthy")
+    elif status == "infected":
+        qs = qs.exclude(disease__icontains="healthy")
+    else:
+        status = "all"
+
+    paginator = Paginator(_ordered(qs), 12)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(request, "history.html", {
+        "rows": [_prediction_row(p) for p in page_obj],
+        "page_obj": page_obj,
+        "q": q,
+        "status": status,
+        "total_count": paginator.count,
+        "has_date": _date_field_name() is not None,
+    })

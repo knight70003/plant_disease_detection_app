@@ -1,112 +1,103 @@
-{% load static %}
-<!DOCTYPE html>
+{% load static %}<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}PlantDoc AI{% endblock %}</title>
-  <meta name="description" content="PlantDoc AI - upload a leaf image and get disease detection insights." />
-  <link rel="stylesheet" href="{% static 'css/style.css' %}" />
-  <link rel="stylesheet" href="{% static 'css/recommendations.css' %}" />
-
-  <!-- Tailwind (CDN) - for premium UI styling -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              50: '#f0fdf4',
-              100: '#dcfce7',
-              200: '#bbf7d0',
-              300: '#86efac',
-              400: '#4ade80',
-              500: '#22c55e',
-              600: '#16a34a',
-              700: '#15803d',
-              800: '#166534',
-              900: '#14532d'
-            }
-          }
-        }
-      }
-    }
-  </script>
+  <meta name="description" content="PlantDoc AI: upload a leaf photo and get a disease diagnosis with treatment and prevention guidance.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/recommendations.css' %}">
+  {% block extra_head %}{% endblock %}
 </head>
-
 <body>
-  <!-- Navbar (Premium / Responsive) -->
-  <nav class="navbar" aria-label="Primary">
-    <div class="nav-inner">
-      <a class="brand" href="{% url 'home' %}" aria-label="PlantDoc AI Home">
-        <span class="brand-mark" aria-hidden="true">🌿</span>
-        <span class="brand-text">PlantDoc <span class="brand-ai">AI</span></span>
-      </a>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></symbol>
+    <symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 13v8M8 17l4-4 4 4"/><path d="M20 16.5A4.5 4.5 0 0 0 18 8h-1.3A7 7 0 1 0 4 14.9"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M22 11.1V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-bug" viewBox="0 0 24 24"><path d="m8 2 1.88 1.88M14.12 3.88 16 2M9 7.13v-1a3 3 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6M12 20v-9M6 13H2M22 13h-4M3 21c0-2.1 1.7-3.9 3.8-4M17.2 17c2.1.1 3.8 1.9 3.8 4"/></symbol>
+    <symbol id="i-flask" viewBox="0 0 24 24"><path d="M10 2v7.5L4.5 19a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 9.5V2M8.5 2h7"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
+    <symbol id="i-sprout" viewBox="0 0 24 24"><path d="M7 20h10M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8zM14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></symbol>
+  </svg>
 
-      <button class="nav-toggle" id="navToggle" type="button" aria-label="Open menu" aria-controls="navMenu" aria-expanded="false">
-        <span class="nav-toggle-lines" aria-hidden="true"></span>
-      </button>
+  {% url 'history' as history_url %}
+  {% url 'logout' as logout_url %}
+  <div class="shell{% block shell_class %}{% if user.is_authenticated %} has-side{% endif %}{% endblock %}">
 
-      <div class="nav-menu" id="navMenu">
-        <a class="nav-link" href="{% url 'home' %}">Home</a>
-        <a class="nav-link" href="{% url 'features' %}">Features</a>
-        <a class="nav-link" href="{% url 'analytics' %}">Analytics</a>
-        <a class="nav-link" href="{% url 'contact' %}">Contact</a>
-
-        <a class="nav-cta" href="{% url 'analytics' %}">
-          <span class="nav-cta-dot" aria-hidden="true"></span>
-          View Analytics
-        </a>
+    {% block sidebar %}{% if user.is_authenticated %}
+    {% with page=request.resolver_match.url_name %}
+    <aside class="side" id="side" aria-label="Main navigation">
+      <a class="brand" href="{% url 'home' %}"><span class="brand-mark"><svg class="ic"><use href="#i-leaf"/></svg></span>PlantDoc AI</a>
+      <nav class="side-nav">
+        <div class="side-label">Workspace</div>
+        <a class="side-link" href="{% url 'home' %}" {% if page == 'home' %}aria-current="page"{% endif %}><svg class="ic"><use href="#i-scan"/></svg>Scan a leaf</a>
+        <a class="side-link" href="{% url 'analytics' %}" {% if page == 'analytics' %}aria-current="page"{% endif %}><svg class="ic"><use href="#i-grid"/></svg>Dashboard</a>
+        {% if history_url %}<a class="side-link" href="{{ history_url }}" {% if page == 'history' %}aria-current="page"{% endif %}><svg class="ic"><use href="#i-history"/></svg>History</a>{% endif %}
+        <div class="side-label" style="margin-top:14px">About</div>
+        <a class="side-link" href="{% url 'features' %}" {% if page == 'features' %}aria-current="page"{% endif %}><svg class="ic"><use href="#i-leaf"/></svg>Features</a>
+        <a class="side-link" href="{% url 'contact' %}" {% if page == 'contact' %}aria-current="page"{% endif %}><svg class="ic"><use href="#i-mail"/></svg>Contact</a>
+      </nav>
+      <div class="side-foot">
+        {% if logout_url %}
+        <form method="post" action="{{ logout_url }}">{% csrf_token %}
+          <button class="side-link" type="submit"><svg class="ic"><use href="#i-logout"/></svg>Log out</button>
+        </form>
+        {% endif %}
       </div>
+    </aside>
+    {% endwith %}
+    <div class="scrim" id="scrim"></div>
+    {% endif %}{% endblock %}
+
+    <div class="shell-main">
+      {% block topbar %}
+      <header class="topbar">
+        {% if user.is_authenticated %}
+          <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu" aria-controls="side" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
+          <div class="topbar-title">{% block page_title %}PlantDoc AI{% endblock %}</div>
+          <span class="chip"><span class="avatar" aria-hidden="true">{{ user.username|slice:":1"|upper }}</span>{{ user.username }}</span>
+        {% else %}
+          <a class="brand" href="{% url 'features' %}"><span class="brand-mark"><svg class="ic"><use href="#i-leaf"/></svg></span>PlantDoc AI</a>
+          <nav class="pub-links" aria-label="Primary">
+            <a class="hide-sm" href="{% url 'features' %}">Features</a>
+            <a class="hide-sm" href="{% url 'contact' %}">Contact</a>
+            <a href="{% url 'login' %}">Log in</a>
+            <a class="btn btn-primary" href="{% url 'signup' %}">Sign up</a>
+          </nav>
+        {% endif %}
+      </header>
+      {% endblock %}
+
+      <main>{% block content %}{% endblock %}</main>
+
+      {% block footer %}
+      <footer class="footer">
+        <div class="footer-in">
+          <span>PlantDoc AI · Plant disease detection for farmers</span>
+          <nav aria-label="Footer">
+            <a href="{% url 'features' %}">Features</a>
+            <a href="{% url 'contact' %}">Contact</a>
+            <a href="https://github.com/knight70003/plant_disease_detection_app" rel="noopener">GitHub</a>
+          </nav>
+        </div>
+      </footer>
+      {% endblock %}
     </div>
-  </nav>
-
-  <script>
-    (function () {
-      const toggle = document.getElementById('navToggle');
-      const menu = document.getElementById('navMenu');
-      if (!toggle || !menu) return;
-
-      const setExpanded = (expanded) => {
-        toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-      };
-
-      toggle.addEventListener('click', () => {
-        const isOpen = menu.classList.toggle('open');
-        setExpanded(isOpen);
-      });
-
-      // Close menu on link click (mobile)
-      menu.querySelectorAll('a').forEach(a => {
-        a.addEventListener('click', () => {
-          menu.classList.remove('open');
-          setExpanded(false);
-        });
-      });
-
-      // Close on Escape
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-          menu.classList.remove('open');
-          setExpanded(false);
-        }
-      });
-    })();
-  </script>
-
-
-  {% block content %}{% endblock %}
-
-  <footer class="footer">
-    <div class="footer-inner">
-      <div class="footer-title">PlantDoc AI</div>
-      <div class="footer-sub">AI-powered plant disease detection • Built for farmers</div>
-    </div>
-  </footer>
-  <script>
-document.addEventListener("contextmenu", event => event.preventDefault());
-</script>
+  </div>
+  <script src="{% static 'js/app.js' %}"></script>
 </body>
 </html>
 

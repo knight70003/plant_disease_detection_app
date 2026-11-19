@@ -1,34 +1,33 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Log in · PlantDoc AI{% endblock %}
+{% block shell_class %}{% endblock %}
+{% block sidebar %}{% endblock %}
+{% block topbar %}{% endblock %}
+{% block footer %}{% endblock %}
 
 {% block content %}
-
-<div class="auth-page">
-
-    <div class="auth-box">
-
-        <h1>🌿 PlantDoc AI</h1>
-
-        <form method="POST">
-
-            {% csrf_token %}
-
-            {{ form.as_p }}
-
-            <button type="submit">
-                Login
-            </button>
-
-        </form>
-
-        <p>
-            Don't have account?
-            <a href="{% url 'signup' %}">
-                Signup
-            </a>
-        </p>
-
+<div class="auth">
+  <section class="auth-art" aria-hidden="true">
+    <a class="brand" href="{% url 'features' %}"><span class="brand-mark"><svg class="ic"><use href="#i-leaf"/></svg></span>PlantDoc AI</a>
+    <div>
+      <h2>Catch crop disease early.</h2>
+      <p>Photograph a leaf, get a diagnosis and a treatment plan.</p>
     </div>
-
+  </section>
+  <section class="auth-panel">
+    <div class="auth-card">
+      <h1>Welcome back</h1>
+      <p>Log in to scan leaves and see your history.</p>
+      <form method="POST" class="auth-form">
+        {% csrf_token %}
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+        {{ form.as_p }}
+        <button class="btn btn-primary btn-block" type="submit">Log in</button>
+      </form>
+      <p class="auth-alt">New here? <a href="{% url 'signup' %}">Create an account</a></p>
+    </div>
+  </section>
 </div>
-
 {% endblock %}
